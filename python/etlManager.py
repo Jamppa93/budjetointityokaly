@@ -1,1 +1,7 @@
-print('hello world')
+class etlManager(): 
+
+    def printObjectType(self):
+        print(type(self))
+  
+  
+

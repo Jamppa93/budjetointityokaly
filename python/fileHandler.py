@@ -1,1 +1,5 @@
-print('hello world')
+class fileHandler(): 
+
+    def printObjectType(self):
+        print(type(self))
+  
