@@ -18,6 +18,7 @@ class mainClass():
     etlManagerInst = None
     fileHandlerInst = None
     
+    
     def __init__(self):
         self.checkNfile = []
         self.tempfileName = ''
@@ -83,8 +84,7 @@ class mainClass():
             fileCount -=1 
 
         ##clearAllFromNewFilesFolder() tai joku tämmönen
-
-  
+        
 ######################################################################
 #MainProgram 
 
