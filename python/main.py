@@ -12,7 +12,7 @@ from fileHandler import fileHandler
 ######################################################################
 #MainClass
 class mainClass(): 
-    checkNfile = [] # muutetaan listaksi
+    checkNfile = [] # muutetaan listaksi , pitäisiko muuttaa checkNfilePath?
     tempfileName = ''
     fileLocDirectories = []
     etlManagerInst = None
@@ -51,15 +51,12 @@ class mainClass():
                 break 
             
         if  fileStructureIsOk == True:
-            self.fileLocDirectories = tempList  #replace the filedirectory paths 
+            self.fileLocDirectories = tempList  #replace the filedirectory paths  # Not very good solution. But you can make it better <insert whihner name>
         return fileStructureIsOk
-
-
-
 
     def getRecentNewFileNamesToList(self):
         
-        path = pathlib.Path(self.getNewFilesPath())
+        path = pathlib.Path(self.getNewFilesPath()) # täytyy tarkistaa onko pathlib.path aina se paikka, jossa ohjelma on.
         tempList = []
         for fileDir in path.rglob('*.pdf'):
             tempList.append(fileDir)
@@ -67,20 +64,16 @@ class mainClass():
         return tempList
 
 
-
-
     def startProcess(self):
-        
-        
-        
         #print(self.getNewFilesPath())
         self.checkNfile = self.getRecentNewFileNamesToList()
         #print(self.checkNfile)
         fileCount = len(self.checkNfile)
         while (fileCount>0):
-            print(self.checkNfile[fileCount-1])
+            #print(self.checkNfile[fileCount-1])
             tempFile = self.fileHandlerInst.readPdf(self.checkNfile[fileCount-1])
-            ## main.etlManagerInst.etlFile(tempFile)
+            ##main.etlManagerInst.etlFile(tempFile)
+            self.etlManagerInst.testDB()
             fileCount -=1 
 
         ##clearAllFromNewFilesFolder() tai joku tämmönen

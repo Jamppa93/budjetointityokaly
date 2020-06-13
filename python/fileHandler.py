@@ -12,7 +12,6 @@ class fileHandler():
 
     def readPdf(self,filePath):
         tempfileList = tabula.read_pdf(filePath,multiple_tables=True, pages='all')    
-        print(type(tempfileList))  
         return tempfileList
 
 
