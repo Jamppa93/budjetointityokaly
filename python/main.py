@@ -9,6 +9,7 @@ import sys
 import pathlib # https://docs.python.org/3/library/pathlib.html#module-pathlib
 from etlManager import etlManager
 from fileHandler import fileHandler
+import pandas
 ######################################################################
 #MainClass
 class mainClass(): 
@@ -17,7 +18,6 @@ class mainClass():
     fileLocDirectories = []
     etlManagerInst = None
     fileHandlerInst = None
-    
     
     def __init__(self):
         self.checkNfile = []
@@ -72,7 +72,7 @@ class mainClass():
         while (fileCount>0):
             #print(self.checkNfile[fileCount-1])
             tempFile = self.fileHandlerInst.readPdf(self.checkNfile[fileCount-1])
-            ##main.etlManagerInst.etlFile(tempFile)
+            self.etlManagerInst.ListFileToPandasDf(tempFile)
             self.etlManagerInst.testDB()
             fileCount -=1 
 

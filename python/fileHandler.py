@@ -3,6 +3,7 @@
 
 import tabula
 
+
 #https://medium.com/@umerfarooq_26378/python-for-pdf-ef0fac2808b0
 
 class fileHandler(): 
@@ -11,7 +12,7 @@ class fileHandler():
         print(type(self))
 
     def readPdf(self,filePath):
-        tempfileList = tabula.read_pdf(filePath,multiple_tables=True, pages='all')    
+        tempfileList = tabula.read_pdf(filePath, pages='all')    
         return tempfileList
 
 
