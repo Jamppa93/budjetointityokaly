@@ -8,25 +8,26 @@ class etlManager():
 
     DBMSInst = None 
     cursor = None 
+    conn= None
     
     def __init__(self):
      self.DBMSInst = DBMS()
-     self.DBMSInst.connectToDatabase()  
+     self.conn= self.DBMSInst.connectToDatabase()  
      self.cursor = self.DBMSInst.getCursor()
          
     def printObjectType(self):
         print(type(self))
     
-    def testDB(self): # WORKS!
-        order_num = self.cursor.execute('SELECT COUNT(*)FROM TILAUS')
-        order_num = order_num.fetchall()
-        for i in order_num:
-            order_num = i[0]
-        order_num = str(order_num)
-        print(order_num)
+    # def getRows(self): # WORKS!
+    #     order_num = self.cursor.execute('SELECT COUNT(*)FROM NORDEA_ACCOUNT_STATEMENT')
+    #     order_num = order_num.fetchall()
+    #     for i in order_num:
+    #         order_num = i[0]
+    #     order_num = int(order_num)
+    #     return order_num
   
     def ListFileToPandasDf(self, tempList):
-
+        
         tempDF = tempList[0]
         for i in range(len(tempList)-1):
             tempDF = pd.concat([tempDF, tempList[i+1]],ignore_index=True)
@@ -35,22 +36,22 @@ class etlManager():
         tempDF.drop(tempDF.columns[cols],axis=1,inplace=True)
         tempDF=tempDF.fillna("")
         #######################################################################################################
-        
+        ## DATE & TRANSACTION COLUMNS 
         tempDFExplanation = []
         tempDFDate = []
         
         tempDFExplanationAndTime = tempDF[tempDF.columns[0]]
         for i in range(len(tempDFExplanationAndTime.index)):
             tempString = tempDFExplanationAndTime.iloc[i] 
-            if (len(tempString)>11): ####
-                
-                
+            if (len(tempString)>11): ####päiväys?
+
                 tempDFDate.append(tempString[0:6])
                 tempDFExplanation.append(tempString[11:])
             else:
                 tempDFDate.append('')
                 tempDFExplanation.append('')
         #######################################################################################################
+        #AMOUNT OF MONEY COLUMN
         tempDFMoneyAmount = tempDF[tempDF.columns[1]].astype(str) + tempDF[tempDF.columns[2]].astype(str) 
         
         for i in range(len(tempDFMoneyAmount.index)):
@@ -60,14 +61,50 @@ class etlManager():
             else:
                 tempDFMoneyAmount.iloc[i] = '' 
         #######################################################################################################
-        
+        #CREATING THE RIGHT TABLE FOR THE DB BEFORE THE CATEGORIZATIONS
         tempDF = pd.DataFrame({ 'date': tempDFDate,'transaction':tempDFExplanation, 'amount':tempDFMoneyAmount})
         tempDF = tempDF.drop(tempDF[tempDF.transaction ==''].index)
         tempDF = tempDF.drop(tempDF[tempDF.amount ==''].index)
+        return tempDF
+    
+    
+    def addDataToDb(self, tempDF, filename):
+        filePathFull = filename.parts
+        filename = filePathFull[-1]; filename = filename.split('.'); filename = filename[0]
+        sql = ('''DECLARE @return_value int, @ans int EXEC @return_value = [dbo].[spCheckIfBatchExists] @ans = @ans OUTPUT, @batchId = '''+filename+' SELECT @return_value')
+        checkIfOldbatch = int (self.conn.execute(sql).fetchone()[0])
+                                              
         
-        print(tempDF)
+        if checkIfOldbatch != 0:
+            print('jee')
+            
+            #deleteRowsProcedureBasedOnTheName
+        ###############################
+        count = 0
+        #check the lastest value from table for serious business 
+        for row in tempDF.itertuples():
+            count+=1
+            # avaimet lisättävä vielä stage
+            self.cursor.execute("INSERT INTO [tilit].[NORDEA_ACCOUNT_STATEMENT_STAGE] VALUES(?,?,?,?,?,?)",(count, row.date, row.transaction, row.amount,'0',filename))
+            self.conn.commit()
+            # kun ready, niin impåortataan oikeaan pöytään
+        ###############################
+        
+        return 
+    
+        #print(tempDF)
+        #count =  self.getRows()
+        #print(count)
+        
+        # prosa joka tsekkaa onko dataa jo ajettu sisää tolla pv:llä
+        #Jos ei ole lisätty vielä kantaan, niin lisää uudet rivit kantaan
 
-        tempDF.to_excel("output111.xlsx",index=False)
+        #tempDF.to_excel("output111.xlsx",index=False)
         #print(tempDF)
 
-     
+    def printDbRows(self):
+        
+        table = self.cursor.execute('SELECT * FROM [NORDEA_ACCOUNT_STATEMENT] ;')
+        table = table.fetchall()
+        for i in table:
+            print(i)

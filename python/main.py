@@ -72,12 +72,15 @@ class mainClass():
         while (fileCount>0):
             #print(self.checkNfile[fileCount-1])
             tempFile = self.fileHandlerInst.readPdf(self.checkNfile[fileCount-1])
-            self.etlManagerInst.ListFileToPandasDf(tempFile)
-            self.etlManagerInst.testDB()
+            #self.etlManagerInst.getRows() #FROM A DB
+            tempFile = self.etlManagerInst.ListFileToPandasDf(tempFile)
+            #print(tempFile)
+            
+            self.etlManagerInst.addDataToDb( tempFile, self.checkNfile[fileCount-1])
             fileCount -=1 
 
         ##clearAllFromNewFilesFolder() tai joku tämmönen
-        
+            #self.etlManagerInst.printDbRows() #temp
 ######################################################################
 #MainProgram 
 
