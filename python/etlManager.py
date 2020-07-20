@@ -76,8 +76,9 @@ class etlManager():
                                               
         
         if checkIfOldbatch != 0:
-            print('jee')
             
+            sql = ('''DELETE FROM NORDEA_ACCOUNT_STATEMENT_FINAL WHERE AJO_KK = '''+filename)
+            self.conn.execute(sql)
             #deleteRowsProcedureBasedOnTheName
         ###############################
         count = 0
@@ -87,7 +88,14 @@ class etlManager():
             # avaimet lisättävä vielä stage
             self.cursor.execute("INSERT INTO [tilit].[NORDEA_ACCOUNT_STATEMENT_STAGE] VALUES(?,?,?,?,?,?)",(count, row.date, row.transaction, row.amount,'0',filename))
             self.conn.commit()
-            # kun ready, niin impåortataan oikeaan pöytään
+            #Siirrä seuraavalle taululle
+            self.cursor.execute(""" EXEC[dbo].[spLoadToFinalTableFromStage]	@finalTableParam = 'NORDEA_ACCOUNT_STATEMENT_FINAL', @stagetableParam = 'NORDEA_ACCOUNT_STATEMENT_STAGE' """)
+            self.conn.commit()
+            #Tyhjennä taulu
+            self.cursor.execute("TRUNCATE TABLE [tilit].[NORDEA_ACCOUNT_STATEMENT_STAGE]")
+            self.conn.commit()                                
+
+            
         ###############################
         
         return 
