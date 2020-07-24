@@ -2,6 +2,9 @@ from DBMS import DBMS
 import pandas as pd
 import numpy as np
 import tabula
+import sys
+from datetime import datetime
+
 #import openpyxl 
 
 class etlManager(): 
@@ -68,32 +71,42 @@ class etlManager():
         return tempDF
     
     
-    def addDataToDb(self, tempDF, filename):
-        filePathFull = filename.parts
-        filename = filePathFull[-1]; filename = filename.split('.'); filename = filename[0]
-        sql = ('''DECLARE @return_value int, @ans int EXEC @return_value = [dbo].[spCheckIfBatchExists] @ans = @ans OUTPUT, @batchId = '''+filename+' SELECT @return_value')
-        checkIfOldbatch = int (self.conn.execute(sql).fetchone()[0])
-                                              
+    def addDataToDb(self, tempDF, fileName):
+        filePathFull = fileName.parts
+
+        fileYear = filePathFull[-1].split('.'); fileYear = fileYear[0]; fileYear = fileYear[-4:]
         
+        fileName = filePathFull[-1]; fileName = fileName.split('.'); fileName = fileName[0]
+        
+        sql = ('DECLARE @return_value int, @ans int EXEC @return_value = [dbo].[spCheckIfBatchExists] @ans = @ans OUTPUT, @batchId = '+fileName+' SELECT @ans')
+        checkIfOldbatch = int (self.conn.execute(sql).fetchone()[0])
         if checkIfOldbatch != 0:
-            
-            sql = ('''DELETE FROM NORDEA_ACCOUNT_STATEMENT_FINAL WHERE AJO_KK = '''+filename)
+            print(fileName)
+            sql = ('EXEC	[dbo].[spDeleteFromTable]@BatchId ='+fileName)
             self.conn.execute(sql)
             #deleteRowsProcedureBasedOnTheName
-        ###############################
-        count = 0
+        #######################################################################################################
+
         #check the lastest value from table for serious business 
         for row in tempDF.itertuples():
-            count+=1
-            # avaimet lisättävä vielä stage
-            self.cursor.execute("INSERT INTO [tilit].[NORDEA_ACCOUNT_STATEMENT_STAGE] VALUES(?,?,?,?,?,?)",(count, row.date, row.transaction, row.amount,'0',filename))
+ 
+            # populoidaan stage
+            self.cursor.execute("INSERT INTO [tilit].[NORDEA_ACCOUNT_STATEMENT_STAGE] VALUES(?,?,?,?,?)",(row.date, row.transaction, row.amount,'0',fileName[0]))
             self.conn.commit()
-            #Siirrä seuraavalle taululle
-            self.cursor.execute(""" EXEC[dbo].[spLoadToFinalTableFromStage]	@finalTableParam = 'NORDEA_ACCOUNT_STATEMENT_FINAL', @stagetableParam = 'NORDEA_ACCOUNT_STATEMENT_STAGE' """)
-            self.conn.commit()
-            #Tyhjennä taulu
-            self.cursor.execute("TRUNCATE TABLE [tilit].[NORDEA_ACCOUNT_STATEMENT_STAGE]")
-            self.conn.commit()                                
+        #Siirrä seuraavalle taululle
+     
+        self.cursor.execute('''EXEC[dbo].[spLoadToFinalTableFromStage] @finalTableParam = 'NORDEA_ACCOUNT_STATEMENT_FINAL', @stagetableParam = 'NORDEA_ACCOUNT_STATEMENT_STAGE', @tempYear ='''+str(fileYear)+'')
+        self.conn.commit()
+        
+        #Lisää rivi metatauluun
+        now = datetime.now(); current_time = now.strftime("%H:%M:%S")
+        print(current_time,fileYear,fileName)
+        self.cursor.execute("INSERT INTO [budjettiExcel].[metatiedot].[AJETUT_AJOT] VALUES(?,?,?)",(current_time,fileYear,fileName))
+        self.conn.commit()                                
+
+        #Tyhjennä taulu
+        self.cursor.execute("TRUNCATE TABLE [tilit].[NORDEA_ACCOUNT_STATEMENT_STAGE]")
+        self.conn.commit()                                
 
             
         ###############################

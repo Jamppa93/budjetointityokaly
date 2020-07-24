@@ -67,11 +67,12 @@ class mainClass():
     def startProcess(self):
         #print(self.getNewFilesPath())
         self.checkNfile = self.getRecentNewFileNamesToList()
-        #print(self.checkNfile)
+        
         fileCount = len(self.checkNfile)
         while (fileCount>0):
             #print(self.checkNfile[fileCount-1])
             tempFile = self.fileHandlerInst.readPdf(self.checkNfile[fileCount-1])
+            
             #self.etlManagerInst.getRows() #FROM A DB
             tempFile = self.etlManagerInst.ListFileToPandasDf(tempFile)
             #print(tempFile)
